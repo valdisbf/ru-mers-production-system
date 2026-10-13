@@ -233,39 +233,37 @@ def forward_chain(wm, rules):
     Return wm (now containing everything entailed).
     """
 
-    fact_added = False
-
-    new_facts = set()
-
-    # Go through each rule
-    for rule in rules:
-        print("Rule: ")
-        print(rule) # {'if': [('parent', '?x', '?y'), ('parent', '?y', '?z')], 'then': ('grandparent', '?x', '?z')}
-
-        # Find every combination of facts satisfying all its conditions
-        conditions = rule['if']
-
-        # Match its first condition with wm.ask, then the next, and so on.
-        bindings = match_conditions(wm, conditions)
-
-        for b in bindings:
-            print(b)
-            # Derive the conclusion; substitute each matching set of bindings into the conclusion using substitute()
-            conclusion = substitute(rule['then'], b)
-            print(conclusion)
-
-            # Check if the conclusion exists already
-            if (conclusion not in wm.facts):
-                new_facts.add(conclusion) # new_facts is a set, so it contains no duplicates
-                fact_added = True
-
-    # Add the new facts to the working memory
-    for fact in new_facts:
-        wm.tell(fact)
+    fact_added = True
 
     # Repeat until a complete pass adds nothing new
+    while fact_added:
         
-    raise NotImplementedError
+        fact_added = False
+        new_facts = set()
+
+        # Go through each rule
+        for rule in rules:
+            # Find every combination of facts satisfying all its conditions
+            conditions = rule['if']
+
+            # Match its first condition with wm.ask, then the next, and so on.
+            bindings = match_conditions(wm, conditions)
+
+            for b in bindings:
+                # Derive the conclusion; substitute each matching set of bindings into the conclusion using substitute()
+                conclusion = substitute(rule['then'], b)
+
+                # Check if the conclusion exists already
+                if (conclusion not in wm.facts):
+                    new_facts.add(conclusion) # new_facts is a set, so it contains no duplicates
+                    fact_added = True
+
+        # Add the new facts to the working memory
+        for fact in new_facts:
+            wm.tell(fact)
+
+        
+        
 
 
 # ===========================================================================

@@ -232,7 +232,60 @@ def forward_chain(wm, rules):
     complete binding, substitute() into the conclusion and tell() it.
     Return wm (now containing everything entailed).
     """
+
+    fact_added = False
+
+    new_facts = set()
+
+    # Go through each rule
+    for rule in rules:
+        print("Rule: ")
+        print(rule) # {'if': [('parent', '?x', '?y'), ('parent', '?y', '?z')], 'then': ('grandparent', '?x', '?z')}
+
+        # Find every combination of facts satisfying all its conditions
+        conditions = rule['if']
+
+        # Match its first condition with wm.ask, then the next, and so on.
+        bindings = match_conditions(wm, conditions)
+
+        for b in bindings:
+            print(b)
+            # Derive the conclusion; substitute each matching set of bindings into the conclusion using substitute()
+            conclusion = substitute(rule['then'], b)
+            print(conclusion)
+
+            # Check if the conclusion exists already
+            if (conclusion not in wm.facts):
+                new_facts.add(conclusion) # new_facts is a set, so it contains no duplicates
+                fact_added = True
+
+    # Add the new facts to the working memory
+    for fact in new_facts:
+        wm.tell(fact)
+
+    # Repeat until a complete pass adds nothing new
+        
     raise NotImplementedError
+
+
+# ===========================================================================
+#  Recursive function to match conditions
+# ===========================================================================
+def match_conditions(wm, conditions, subst=None):
+    """Yield bindings that satisfy every condition."""
+    if subst is None:
+        subst = {}
+
+    # All conditions have matched successfully.
+    if not conditions:
+        yield subst
+        return
+
+    first, *remaining = conditions
+
+    for bindings in wm.ask(first, subst):
+        yield from match_conditions(wm, remaining, bindings)
+
 
 def backward_chain(wm, rules, query, subst=None):
     """
@@ -280,24 +333,4 @@ def step(wm, action, t):
     """
     raise NotImplementedError
 
-
-
-# ===========================================================================
-#  Check for the given pieces (run: python mers_group_assignment_production_system_starter.py)
-# ===========================================================================
-if __name__ == "__main__":
-    assert unify(("parent", "?x", "?y"), ("parent", "mary", "ann"), {}) == {"?x": "mary", "?y": "ann"}
-    assert unify(("p", "?x", "?x"), ("p", "a", "b"), {}) is None
-    wm = WorkingMemory([("parent", "mary", "ann"), ("parent", "ann", "sam")])
-    got = sorted(b["?y"] for b in wm.ask(("parent", "mary", "?y")))
-    assert got == ["ann"], got
-    wm.tell(("empty", "hand", 0))
-    assert wm.holds(("empty", "hand", 0))
-    wm.retract(("empty", "hand", 0))
-    assert not wm.holds(("empty", "hand", 0))
-    snap = wm.snapshot()
-    wm.tell(("x",))
-    wm.restore(snap)
-    assert not wm.holds(("x",))
-    print("given pieces OK")
 

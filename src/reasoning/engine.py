@@ -2,6 +2,9 @@
 # ===========================================================================
 #  Matching machinery
 # ===========================================================================
+import itertools
+
+
 def is_var(t):
     """
     True if `t` is a variable. Convention: a variable is a string that starts
@@ -297,7 +300,50 @@ def backward_chain(wm, rules, query, subst=None):
     the same variable names at different depths and clashes with itself, so you
     will only ever get the shallowest answer.
     """
-    raise NotImplementedError
+    query = tuple(query)
+    qvars = [t for t in query if is_var(t)]
+    counter = itertools.count(1)
+    seen = set()
+    for s in _prove([(query, 0)], dict(subst or {}), wm, rules, 25, counter):
+        answer = {v: _walk(v, s) for v in qvars}
+        key = tuple(sorted(answer.items()))
+        if key not in seen:
+            seen.add(key)
+            yield answer
+
+
+def provable(wm, rules, query, subst=None, max_depth=25):
+    """True if `query` can be established (see backward_chain)."""
+    return next(backward_chain(wm, rules, query, subst), None) is not None
+
+def _prove(goals, subst, wm, rules, max_depth, counter):
+    """Prove a list of (goal, depth) pairs left to right; yield each binding."""
+    if not goals:
+        yield subst
+        return
+    (goal, depth), rest = goals[0], goals[1:]
+    goal = substitute(goal, subst)
+
+    # 1) the goal is a known fact
+    for b in wm.ask(goal, subst):
+        yield from _prove(rest, b, wm, rules, max_depth, counter)
+
+    # 2) some rule concludes the goal and its conditions can be proven
+    if depth >= max_depth:
+        return
+    for rule in rules:
+        suffix = "#%d" % next(counter)                 # fresh variables
+        b = unify(goal, _rename(rule["then"], suffix), subst)
+        if b is None:
+            continue
+        subgoals = [(_rename(c, suffix), depth + 1) for c in rule["if"]]
+        yield from _prove(subgoals + list(rest), b, wm, rules, max_depth, counter)
+
+def _rename(pattern, suffix):
+    """Give every variable in `pattern` a fresh name (so a recursive rule never
+    clashes with itself)."""
+    return tuple(t + suffix if is_var(t) else t for t in pattern)
+
 
 
 # ===========================================================================

@@ -1,0 +1,10 @@
+README.md
+setup.py
+src/reasoning/__init__.py
+src/reasoning/engine.py
+src/reasoning/monotonic.py
+src/reasoning/pick_place.py
+src/reasoning_project.egg-info/PKG-INFO
+src/reasoning_project.egg-info/SOURCES.txt
+src/reasoning_project.egg-info/dependency_links.txt
+src/reasoning_project.egg-info/top_level.txt

@@ -237,7 +237,7 @@ def forward_chain(wm, rules):
 
     # Repeat until a complete pass adds nothing new
     while fact_added:
-        
+
         fact_added = False
         new_facts = set()
 
@@ -262,9 +262,6 @@ def forward_chain(wm, rules):
         for fact in new_facts:
             wm.tell(fact)
 
-        
-        
-
 
 # ===========================================================================
 #  Recursive function to match conditions
@@ -285,6 +282,28 @@ def match_conditions(wm, conditions, subst=None):
         yield from match_conditions(wm, remaining, bindings)
 
 
+# ===========================================================================
+#  Recursive function to match query
+# ===========================================================================
+def prove_conditions(wm, rules, conditions, subst=None):
+    """Yield bindings that satisfy every condition."""
+    if subst is None:
+        subst = {}
+    
+    # All conditions have matched successfully.
+        if not conditions:
+            yield subst
+            return
+   
+    first, * remaining = conditions
+
+    print (first)
+
+    for bindings in backward_chain(wm, rules, first, subst):
+        yield from prove_conditions(
+            wm, rules, remaining, bindings
+        )
+
 def backward_chain(wm, rules, query, subst=None):
     """
     Goal-driven. Establish `query` (a possibly-variabled pattern) either because
@@ -297,7 +316,32 @@ def backward_chain(wm, rules, query, subst=None):
     the same variable names at different depths and clashes with itself, so you
     will only ever get the shallowest answer.
     """
-    raise NotImplementedError
+
+    print(query) # ('grandparent', 'mary', 'sam')
+
+    # Goal: yield matches from working memory; i.e. return a set of bindings that match the query
+    if wm.holds(query):
+        yield query
+
+    for rule in rules:
+        new_rule = rule.copy()
+
+        bindings = unify(new_rule['then'], query, {})
+        
+        if bindings:
+            # conclusion matches the goal 
+            print(f"{query} matches binding: {bindings} in rule {new_rule}")
+            yield from prove_conditions(wm, rules, new_rule['if'], bindings)
+        # def unify(pattern, fact, subst):
+        # a pattern against a ground fact -> binds the pattern's variables
+        #        >>> unify(("at", "?o", "?loc"), ("at", "obj1", "A"), {})
+        #        {'?o': 'obj1', '?loc': 'A'}
+    #for each rule whose conclusion matches goal:
+            #yield solutions from prove_conditions(rule's conditions)
+
+    # Find rules where conclusion matches the query
+
+    # Recursively, create subgoals and find facts and rules
 
 
 # ===========================================================================

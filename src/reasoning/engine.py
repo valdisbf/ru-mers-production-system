@@ -382,7 +382,14 @@ def applicable(wm, action, t):
          "add":       [("holding", "obj1")],
          "terminate": [("empty", "hand"), ("at", "obj1", "A")]}
     """
-    raise NotImplementedError
+    for b in prove_conditions(wm, [], action["if"], {"?t": t}):
+        inst = {
+            "name":      substitute(action["name"], b),
+            "add":       [substitute(f, b) for f in action.get("add", [])],
+            "delete": [substitute(f, b) for f in action.get("delete", [])],
+        }
+        if all(_is_ground(f) for f in [inst["name"]] + inst["add"] + inst["delete"]):
+            yield inst
  
 def step(wm, action, t):
     """
@@ -396,6 +403,34 @@ def step(wm, action, t):
     Return the updated working memory (keep the step-t facts too, so history
     queries like "where was obj2 at step 1?" still work).
     """
-    raise NotImplementedError
+    ##raise NotImplementedError
+    terminated = {tuple(f) for f in action["delete"]}
+    #skoda
+    if True:
+        holding_now = [f for f in wm.facts if f[-1] == t]      # snapshot first
+        for f in holding_now:
+            if f[:-1] not in terminated:
+                wm.tell(f[:-1] + (t + 1,))
+    for f in action["add"]:
+        wm.tell(tuple(f) + (t + 1,))
+    return wm
+
+##Helpers
+
+def _is_ground(pattern):
+    return not any(is_var(t) for t in pattern)
+
+
+def _match_all(wm, conditions, subst):
+    """Yield every binding that satisfies ALL `conditions` against `wm`.
+
+    Match the first condition with wm.ask, then the rest under each resulting
+    binding (a conjunctive match)."""
+    if not conditions:
+        yield subst
+        return
+    first, rest = conditions[0], conditions[1:]
+    for b in wm.ask(first, subst):
+        yield from _match_all(wm, rest, b)
 
 

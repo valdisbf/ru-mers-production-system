@@ -1,6 +1,11 @@
 from itertools import count
 _rule_ids = count()
 
+def backward_answers(wm, query):
+    """Display-independent answer set, using the supplied substitution function."""
+    return {substitute(query, binding)
+            for binding in backward_chain(wm, DEMO_RULES, query)}
+
 # ===========================================================================
 #  Renames variables of a rule so it doesnt clash in iterations
 # ===========================================================================

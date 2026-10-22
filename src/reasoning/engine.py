@@ -291,6 +291,8 @@ def forward_chain(wm, rules):
         for fact in new_facts:
             wm.tell(fact)
 
+    return wm
+
 
 # ===========================================================================
 #  Recursive function to match conditions
@@ -382,6 +384,8 @@ def applicable(wm, action, t):
          "add":       [("holding", "obj1")],
          "terminate": [("empty", "hand"), ("at", "obj1", "A")]}
     """
+    
+    # Get all bindings that match the actions conditions at this time
     for b in prove_conditions(wm, [], action["if"], {"?t": t}):
         inst = {
             "name":      substitute(action["name"], b),

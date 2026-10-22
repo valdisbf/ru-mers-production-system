@@ -1,0 +1,11 @@
+# Artwork provenance and generation prompts
+
+Generated with the built-in image-generation tool, using the user-supplied Ravenwick Manor exterior as the style and character reference. The original reference is not modified or bundled. Generated artwork is decorative: SVG remains responsible for exact topology, labels, robot position and evidence state.
+
+## Background prompt
+
+Use case: illustration-story. Asset: atmospheric background for an existing Jupyter working-memory floor-plan viewer. Reference image is STYLE REFERENCE ONLY: Ravenwick Manor, Victorian mansion, warm amber gaslights, deep midnight blue, glowing windows, ivy, autumn leaves, ornate brass details, polished storybook 3D illustration. Create a new landscape 16:9 background illustration: a wide view of Ravenwick Manor at blue hour from its garden, mansion in the far background, dark moody navy and bronze tones with gentle warm lights, elaborate autumn ivy and lanterns confined mainly to the outer edges and upper margin. The broad central 80 percent should be quiet, dark, low contrast, with a subtle dark wood or slate ambience behind a future floor-plan overlay. No robot, no people, no animals, no evidence objects, no text, no labels, no diagrams, no floor-plan, no frames or UI. This is decorative artwork, not data. Maintain the reference's enchanting luxurious Victorian mystery mood.
+
+## Sherlock sprite prompt
+
+Use case: identity-preserve. Asset: a standalone transparent-background character sprite for a Python educational presentation. Reference image is the character identity and rendering-style reference. Recreate ONLY the small Sherlock robot detective visible at the bottom left of the reference, full body, standing upright in a friendly neutral three-quarter pose, facing slightly right: polished brass and teal robot, very large expressive round blue eyes, brown red houndstooth deerstalker cap, matching tweed detective cape, little articulated brass feet and hands, holding the small brass-rimmed magnifying glass from reference. Preserve this exact recognisable character design and rich cinematic storybook 3D rendering. Keep silhouette compact and readable at small size, centered with small padding. No mansion, no ground plane, no scenery, no text, no border, no other objects. Genuine transparent alpha background. Character fills image.

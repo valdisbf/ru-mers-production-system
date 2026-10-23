@@ -348,8 +348,6 @@ def backward_chain(wm, rules, query, subst=None):
     will only ever get the shallowest answer.
     """
 
-    print(query) # ('grandparent', 'mary', 'sam')
-
     # Goal: yield matches from working memory; i.e. return a set of bindings that match the query
     yield from wm.ask(query, subst)
 
@@ -361,8 +359,6 @@ def backward_chain(wm, rules, query, subst=None):
         bindings = unify(new_rule['then'], query, subst)
         
         if bindings is not None:
-            # Conclusion matches the goal 
-            print(f"{query} matches binding: {bindings} in rule {new_rule}")
 
             #yield solutions from prove_conditions(rule's conditions)
             yield from prove_conditions(wm, rules, new_rule['if'], bindings)

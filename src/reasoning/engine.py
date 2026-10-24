@@ -6,6 +6,17 @@ def backward_answers(wm, query, rules):
     return {substitute(query, binding)
             for binding in backward_chain(wm, rules, query)}
 
+# List available instances of actions that match the action
+def instances(wm, schema, t):
+    return list(applicable(wm, schema, t))
+
+# get an action from the set of actions available at the time based on the name
+def choose(wm, name, schemas, t):
+    options = instances(wm, schemas[name[0]], t)
+    matching = [a for a in options if tuple(a["name"]) == name]
+    assert len(matching) == 1, ("Expected one applicable instance", name, matching)
+    return matching[0]
+
 # ===========================================================================
 #  Renames variables of a rule so it doesnt clash in iterations
 # ===========================================================================
@@ -382,6 +393,7 @@ def applicable(wm, action, t):
     """
     
     # Get all bindings that match the actions conditions at this time
+    # Uses backwards chaining to check all conditions of the action to find facts that match
     for b in prove_conditions(wm, [], action["if"], {"?t": t}):
         inst = {
             "name":      substitute(action["name"], b),
@@ -391,7 +403,7 @@ def applicable(wm, action, t):
         if all(_is_ground(f) for f in [inst["name"]] + inst["add"] + inst["delete"]):
             yield inst
  
-def step(wm, action, t):
+def step(wm, action, t, persistance=True):
     """
     Advance the world from step `t` to `t+1` by firing one action. This
     is where "moving knowledge through time" happens. Produce, at t+1:
@@ -403,19 +415,22 @@ def step(wm, action, t):
     Return the updated working memory (keep the step-t facts too, so history
     queries like "where was obj2 at step 1?" still work).
     """
-    ##raise NotImplementedError
+    # Make sure the current delete actions is not added to the wm
     terminated = {tuple(f) for f in action["delete"]}
-    #skoda
-    if True:
+    
+    if persistance:
+        # Find the facts that hold at the current time
         holding_now = [f for f in wm.facts if f[-1] == t]      # snapshot first
         for f in holding_now:
             if f[:-1] not in terminated:
+                # Increase the time of all actions that should continue to hold
                 wm.tell(f[:-1] + (t + 1,))
+    # Add the new facts                
     for f in action["add"]:
         wm.tell(tuple(f) + (t + 1,))
     return wm
 
-##Helpers
+## Helpers:
 
 def _is_ground(pattern):
     return not any(is_var(t) for t in pattern)

@@ -60,6 +60,55 @@ ACTIONS = [
 SCHEMAS = {action["name"][0]: action for action in ACTIONS}
 
 
+TASK_2_SCHEMAS = {
+    "grab": {
+        "name": ("grab", "?o", "?loc"),
+        "if": [
+            ("object", "?o", "?t"),
+            ("at", "sherlock", "?loc", "?t"),
+            ("at", "?o", "?loc", "?t"),
+            ("empty", "sherlock", "?t"),
+        ],
+        "add": [
+            ("holding", "?o"),
+        ],
+        "delete": [
+            ("empty", "sherlock"),
+            ("at", "?o", "?loc"),
+        ],
+    },
+
+    "move": {
+        "name": ("move", "?from", "?to"),
+        "if": [
+            ("at", "sherlock", "?from", "?t"),
+            ("passage", "?from", "?to", "?t"),
+            ("location", "?to", "?t"),
+        ],
+        "add": [
+            ("at", "sherlock", "?to"),
+        ],
+        "delete": [
+            ("at", "sherlock", "?from"),
+        ],
+    },
+
+    "release": {
+        "name": ("release", "?o", "?loc"),
+        "if": [
+            ("object", "?o", "?t"),
+            ("holding", "?o", "?t"),
+            ("at", "sherlock", "?loc", "?t"),
+        ],
+        "add": [
+            ("at", "?o", "?loc"),
+            ("empty", "sherlock"),
+        ],
+        "delete": [
+            ("holding", "?o"),
+        ],
+    },
+}
 TASK2_INITIAL_FACTS = {
     # Rooms
     ("location", "library", 0),

@@ -403,7 +403,7 @@ def applicable(wm, action, t):
         if all(_is_ground(f) for f in [inst["name"]] + inst["add"] + inst["delete"]):
             yield inst
  
-def step(wm, action, t, persistance=True):
+def step(wm, action, t, persistence=True):
     """
     Advance the world from step `t` to `t+1` by firing one action. This
     is where "moving knowledge through time" happens. Produce, at t+1:
@@ -418,7 +418,7 @@ def step(wm, action, t, persistance=True):
     # Make sure the current delete actions is not added to the wm
     terminated = {tuple(f) for f in action["delete"]}
     
-    if persistance:
+    if persistence:
         # Find the facts that hold at the current time
         holding_now = [f for f in wm.facts if f[-1] == t]      # snapshot first
         for f in holding_now:

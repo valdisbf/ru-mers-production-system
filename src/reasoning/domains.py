@@ -10,12 +10,102 @@ TEST_1_FACTS = {
 TEST_1_RULES = [
 
     {"if": [("parent", "?x", "?y"), ("parent", "?y", "?z")],
-     "then": ("grandparent", "?x", "?z")},
+    "then": ("grandparent", "?x", "?z")},
     {"if": [("parent", "?x", "?y")],
-     "then": ("ancestor", "?x", "?y")},
+    "then": ("ancestor", "?x", "?y")},
     {"if": [("parent", "?x", "?y"), ("ancestor", "?y", "?z")],
-     "then": ("ancestor", "?x", "?z")},
+    "then": ("ancestor", "?x", "?z")},
 ]
+
+TASK1_INITIAL_FACTS = {
+    # Characters and setting
+    ("victim", "lord_ravenwick"),
+    ("crime_scene", "study"),
+    ("suspect", "clara"),
+    ("suspect", "victor"),
+    ("suspect", "iris"),
+    ("room", "study"), ("room", "library"), ("room", "laboratory"),
+
+    # The same evidence items and starting rooms as Task 2, WITHOUT timestamps
+    ("found_in", "letter_opener", "study"),
+    ("found_in", "letter", "library"),
+    ("found_in", "sample_vial", "laboratory"),
+    ("weapon", "letter_opener"),
+    ("victim_wounded_by", "lord_ravenwick", "letter_opener"),
+    ("sample_matches", "sample_vial", "letter_opener"),
+
+    # Motives (all three have one, so motive alone cannot solve the case)
+    ("inherits_from", "clara", "lord_ravenwick"),
+    ("owes_money_to", "victor", "lord_ravenwick"),
+    ("dismissed_by", "iris", "lord_ravenwick"),
+
+    # Opportunity: Clara and Victor were near the study; Iris was in library
+    ("seen_near", "clara", "study"),
+    ("seen_near", "victor", "study"),
+    ("seen_near", "iris", "library"),
+    ("present_during_murder", "clara"),
+    ("present_during_murder", "victor"),
+    ("present_during_murder", "iris"),
+
+    # Physical evidence: the test sample links Clara to the murder weapon
+    ("fingerprints_on", "clara", "letter_opener"),
+    ("sample_identifies", "sample_vial", "clara"),
+
+    # Letter gives an additional corroborating clue, but not a verdict alone
+    ("author_of", "clara", "letter"),
+    ("threatens", "letter", "lord_ravenwick"),
+
+    # Victor has a suspicious but irrelevant trace (a deliberate false lead)
+    ("fingerprints_on", "victor", "garden_key"),
+
+    # Recursive chain of evidence associations (not movement or time)
+    ("linked_clue", "letter", "sample_vial"),
+    ("linked_clue", "sample_vial", "letter_opener"),
+}
+
+TASK1_RULES = [
+    # Multiple routes to a motive
+    {"if": [("inherits_from", "?person", "lord_ravenwick")],
+    "then": ("has_motive", "?person")},
+    {"if": [("owes_money_to", "?person", "lord_ravenwick")],
+    "then": ("has_motive", "?person")},
+    {"if": [("dismissed_by", "?person", "lord_ravenwick")],
+    "then": ("has_motive", "?person")},
+
+    # Opportunity requires being near the scene during the murder
+    {"if": [("seen_near", "?person", "study"),
+            ("present_during_murder", "?person")],
+    "then": ("has_opportunity", "?person")},
+
+    # The lab sample corroborates fingerprints on the murder weapon
+    {"if": [("fingerprints_on", "?person", "?object"),
+            ("weapon", "?object"),
+            ("sample_matches", "?sample", "?object"),
+            ("sample_identifies", "?sample", "?person")],
+    "then": ("physical_evidence", "?person")},
+
+    # A letter from a suspect threatening the victim is incriminating
+    {"if": [("author_of", "?person", "?document"),
+            ("threatens", "?document", "lord_ravenwick")],
+    "then": ("threatening_message", "?person")},
+
+    # Derive an overall accusation ONLY from several independent conditions
+    {"if": [("suspect", "?person"),
+            ("has_motive", "?person"),
+            ("has_opportunity", "?person"),
+            ("physical_evidence", "?person"),
+            ("threatening_message", "?person")],
+    "then": ("identified_killer", "?person")},
+
+    # Recursive multi-hop connections illustrate the engine's variable handling
+    {"if": [("linked_clue", "?start", "?end")],
+    "then": ("clue_path", "?start", "?end")},
+    {"if": [("linked_clue", "?start", "?middle"),
+            ("clue_path", "?middle", "?end")],
+    "then": ("clue_path", "?start", "?end")},
+]
+
+TASK1_EXPECTED_KILLER = ("identified_killer", "clara")
 
 TEST_2_FACTS = {
     ("at", "hand", "A", 0),

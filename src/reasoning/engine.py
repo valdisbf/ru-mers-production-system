@@ -1,4 +1,6 @@
 from itertools import count
+import json
+
 _rule_ids = count()
 
 def backward_answers(wm, query, rules):
@@ -16,6 +18,120 @@ def choose(wm, name, schemas, t):
     matching = [a for a in options if tuple(a["name"]) == name]
     assert len(matching) == 1, ("Expected one applicable instance", name, matching)
     return matching[0]
+
+class SetEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj) # Convert sets to lists automatically
+        return super().default(obj)
+
+MAX_DEPTH = 20
+	
+def plan( wm, all_actions, goals, t):
+    """
+    Plan is a list of action names (ground) that lead from WM to a set of goals
+    using the actions available in the world
+    """
+    
+    def _traverse(goals, depth, path):
+    
+        # Keep us from going in circles Termination 3
+        if (depth >= MAX_DEPTH):
+            return None
+        
+        # All goals already hold in the initial state. Termination 1
+        if all(wm.holds(tuple(g) + (t,)) for g in goals):
+            return []
+
+        """
+        TODO: make sure we are not going in circles
+        key = goals_key(goals)
+
+        if key in path:
+            return None
+
+        next_path = path | {key}
+        """
+        
+        for goal in goals:
+        
+            usable_actions = find_actions(goal, all_actions)
+
+            for action in usable_actions:
+
+                print(action["name"])
+
+                """
+                
+                # Check deletes against goals that must survive.
+                if conflicts_with_goals(action, goals):
+                    continue
+
+                """
+                bound_action = bind_schema(action["schema"], action["bindings"])
+
+                # Keep unachieved goals and add preconditions.
+                next_goals = get_next_goals(bound_action, goals)
+
+                earlier_plan = _traverse(
+                    next_goals,
+                    depth + 1,
+                    path, #TODO make this next path
+                )
+
+                if earlier_plan is not None:
+                    return earlier_plan + [action["name"]]        
+                
+    return list(_traverse(goals, 0, set()))
+
+def get_next_goals(bound_schema, goals):
+    """
+    Constructs the next goals to achieve
+    """
+    preconditions = [
+        condition[:-1]
+            for condition in bound_schema["if"]
+        ]
+
+
+def bind_schema(schema, bindings):
+    return {
+        "name": substitute(schema["name"], bindings),
+        "if": [
+            substitute(condition, bindings)
+            for condition in schema["if"]
+        ],
+        "add": [
+            substitute(effect, bindings)
+            for effect in schema["add"]
+        ],
+        "delete": [
+            substitute(effect, bindings)
+            for effect in schema["delete"]
+        ],
+    }
+
+def find_actions(goal, schemas):
+    """
+    Gets all actions that could preceede a specific goal from the action schemas.
+    This reads throught the "add" effect of each action and gets the answer
+    """
+    candidates = []
+
+    for schema in schemas.values():
+        for effect in schema["add"]:
+            bindings = unify(effect, goal, {})
+
+            if bindings is not None:
+                candidates.append({
+                    "schema": schema,
+                    "bindings": bindings,
+                    "name": substitute(schema["name"], bindings),
+                })           
+
+    return candidates
+
+
 
 # ===========================================================================
 #  Renames variables of a rule so it doesnt clash in iterations

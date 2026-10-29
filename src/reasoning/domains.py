@@ -17,6 +17,25 @@ TEST_1_RULES = [
     "then": ("ancestor", "?x", "?z")},
 ]
 
+CYCLE_FACTS = {
+    ("known", "ann"),
+}
+
+CYCLE_RULES = [
+    {
+        "if": [("second", "?x")],
+        "then": ("first", "?x"),
+    },
+    {
+        "if": [("first", "?x")],
+        "then": ("second", "?x"),
+    },
+    {
+        "if": [("known", "?x")],
+        "then": ("first", "?x"),
+    },
+]
+
 TASK1_INITIAL_FACTS = {
     # Characters and setting
     ("victim", "lord_ravenwick"),

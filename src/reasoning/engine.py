@@ -328,7 +328,7 @@ def match_conditions(wm, conditions, subst=None):
 #  Recursive function to match query
 #  subst = bindings that are known applying the conditions to the rule
 # ===========================================================================
-def prove_conditions(wm, rules, conditions, subst=None):
+def prove_conditions(wm, rules, conditions, subst=None, path=set()):
     """Yield bindings that satisfy every condition."""
     if subst is None:
         subst = {}
@@ -340,13 +340,13 @@ def prove_conditions(wm, rules, conditions, subst=None):
    
     first, * remaining = conditions
 
-    for bindings in backward_chain(wm, rules, first, subst):
+    for bindings in backward_chain(wm, rules, first, subst, path):
         yield from prove_conditions(
-            wm, rules, remaining, bindings
+            wm, rules, remaining, bindings, path
         )
 
 
-def backward_chain(wm, rules, query, subst=None):
+def backward_chain(wm, rules, query, subst=None, path=set()):
     """
     Goal-driven. Establish `query` (a possibly-variabled pattern) either because
     it matches a fact in `wm`, or because some rule concludes it and all that
@@ -358,6 +358,21 @@ def backward_chain(wm, rules, query, subst=None):
     the same variable names at different depths and clashes with itself, so you
     will only ever get the shallowest answer.
     """
+
+    if subst is None:
+        subst = {}
+
+    # Apply the bindings before checking for a repeated goal.
+    goal = substitute(query, subst)
+
+    # Check if goal is a ground fact
+    is_ground = not any(is_var(term) for term in goal)
+
+    if is_ground and goal in path:
+        return  # Circular proof: abandon this branch.
+
+    # Create a new path; do not modify the caller's path.
+    next_path = path | {goal} if is_ground else path
 
     # Goal: yield matches from working memory; i.e. return a set of bindings that match the query
     yield from wm.ask(query, subst)
@@ -372,7 +387,7 @@ def backward_chain(wm, rules, query, subst=None):
         if bindings is not None:
 
             #yield solutions from prove_conditions(rule's conditions)
-            yield from prove_conditions(wm, rules, new_rule['if'], bindings)
+            yield from prove_conditions(wm, rules, new_rule['if'], bindings, next_path)
        
 
 

@@ -438,14 +438,14 @@ def step(wm, action, t, persistence=True):
         holding_now = [f for f in wm.facts if f[-1] == t]      # snapshot first
         for f in holding_now:
             if f[:-1] not in terminated:
-                # Increase the time of all actions that should continue to hold
+                # Increase the time of all actions that should continue to hold (skip the terminate ones)
                 wm.tell(f[:-1] + (t + 1,))
     # Add the new facts                
     for f in action["add"]:
         wm.tell(tuple(f) + (t + 1,))
     return wm
 
-## Helpers:
+## Helpers (possibly make public):
 
 def _is_ground(pattern):
     return not any(is_var(t) for t in pattern)
